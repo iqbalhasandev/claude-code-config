@@ -381,3 +381,9 @@ Opus with `[xhigh]`.
 
 ~/.claude.json                 # account state + mcpServers (secrets live here)
 ```
+
+---
+
+## License
+
+[MIT](LICENSE) © Iqbal Hasan
