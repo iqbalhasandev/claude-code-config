@@ -1,0 +1,43 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "model": "opus[1m]",
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"$HOME/.claude/statusline-command.sh\""
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "caveman@caveman": true,
+    "chrome-devtools-mcp@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "playground@claude-plugins-official": true,
+    "swift-lsp@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
+  },
+  "effortLevel": "high",
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "xhigh"
+    }
+  },
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark-daltonized",
+  "voiceEnabled": true
+}
