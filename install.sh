@@ -79,7 +79,6 @@ fi
 info "adding marketplaces"
 claude plugin marketplace add anthropics/claude-plugins-official >/dev/null 2>&1 || warn "official marketplace already present"
 claude plugin marketplace add JuliusBrussee/caveman              >/dev/null 2>&1 || warn "caveman marketplace already present"
-claude plugin marketplace add rohitg00/agentmemory               >/dev/null 2>&1 || warn "agentmemory marketplace already present"
 
 PLUGINS=(
   superpowers@claude-plugins-official
@@ -91,7 +90,6 @@ PLUGINS=(
   playground@claude-plugins-official
   swift-lsp@claude-plugins-official
   caveman@caveman
-  agentmemory@agentmemory
 )
 for plugin in "${PLUGINS[@]}"; do
   if claude plugin install "$plugin" >/dev/null 2>&1; then
@@ -127,7 +125,6 @@ fi
 add_mcp playwright --scope user playwright -- npx -y @playwright/mcp@latest
 add_mcp sequential-thinking --scope user sequential-thinking -- npx @modelcontextprotocol/server-sequential-thinking
 add_mcp claude-design --scope user --transport http claude-design https://api.anthropic.com/v1/design/mcp
-add_mcp agentmemory --scope user agentmemory -- npx -y @agentmemory/mcp
 
 MARKITDOWN_BIN="$(command -v markitdown-mcp 2>/dev/null || true)"
 for candidate in "$HOME/.local/bin/markitdown-mcp" "$HOME/.local/bin/markitdown-mcp.exe"; do

@@ -386,9 +386,8 @@ Skips the usage warning shown before a multi-agent workflow starts.
 
 ### Plugins and marketplaces
 
-`enabledPlugins` and `extraKnownMarketplaces` are documented in [section 3](#3-plugins). All three
-marketplaces (`claude-plugins-official`, `caveman` and `agentmemory`) are declared in
-`extraKnownMarketplaces`.
+`enabledPlugins` and `extraKnownMarketplaces` are documented in [section 3](#3-plugins). Both
+marketplaces (`claude-plugins-official` and `caveman`) are declared in `extraKnownMarketplaces`.
 
 ---
 
@@ -431,15 +430,14 @@ reset timestamps. The script works on macOS, Linux and Windows (Git Bash):
 
 ## 3. Plugins
 
-Three marketplaces are registered:
+Two marketplaces are registered:
 
 | Marketplace | Source |
 | --- | --- |
 | `claude-plugins-official` | github: `anthropics/claude-plugins-official` |
 | `caveman` | github: `JuliusBrussee/caveman` |
-| `agentmemory` | github: `rohitg00/agentmemory` |
 
-Ten plugins, all installed at **user** scope, all enabled:
+Nine plugins, all installed at **user** scope, all enabled:
 
 | Plugin | Marketplace | Version | What it adds |
 | --- | --- | --- | --- |
@@ -452,14 +450,12 @@ Ten plugins, all installed at **user** scope, all enabled:
 | `playground` | official | `b860d6f2` | Builds interactive single-file HTML playgrounds |
 | `swift-lsp` | official | 1.0.0 | Swift language server integration |
 | `caveman` | caveman | 2.7.0 | Compressed-output mode, cavecrew subagents, workflow skills, Caveman Cloud cost tooling |
-| `agentmemory` | agentmemory | 0.9.29 | Persistent cross-session memory: lifecycle hooks capture tool use, MCP tools and skills recall it later |
 
 Reinstall:
 
 ```bash
 claude plugin marketplace add anthropics/claude-plugins-official
 claude plugin marketplace add JuliusBrussee/caveman
-claude plugin marketplace add rohitg00/agentmemory
 
 claude plugin install superpowers@claude-plugins-official
 claude plugin install frontend-design@claude-plugins-official
@@ -470,7 +466,6 @@ claude plugin install claude-code-setup@claude-plugins-official
 claude plugin install playground@claude-plugins-official
 claude plugin install swift-lsp@claude-plugins-official
 claude plugin install caveman@caveman
-claude plugin install agentmemory@agentmemory
 ```
 
 `install.sh` does this, then writes the `enabledPlugins` block so the set is enabled without further
@@ -498,19 +493,11 @@ session — terse, compressed assistant output. It is on by default at level `fu
 session with `/caveman off`, or drop the plugin if that style is unwanted. No hook is defined in
 `settings.json` itself; the hook is entirely the plugin's.
 
-### Note on the agentmemory plugin
-
-It registers hooks on most session lifecycle events (`SessionStart`, `UserPromptSubmit`, `PreToolUse`,
-`PostToolUse`, `Stop`, `SessionEnd` and others) that record observations to a local agentmemory server
-on `http://localhost:3111`. The server must be running for capture and recall to work; check it with
-`curl -fsS http://localhost:3111/agentmemory/livez`. When it is down, the `agentmemory` MCP server
-times out at session start.
-
 ---
 
 ## 4. MCP servers
 
-Six servers at user scope on macOS; five on Windows, where `markitdown` is optional. Stored in
+Five servers at user scope on macOS; four on Windows, where `markitdown` is optional. Stored in
 `~/.claude.json` under `mcpServers`, not in `settings.json`.
 
 | Name | Transport | Endpoint / command | Auth |
@@ -520,7 +507,6 @@ Six servers at user scope on macOS; five on Windows, where `markitdown` is optio
 | `sequential-thinking` | stdio | `npx @modelcontextprotocol/server-sequential-thinking` | none |
 | `markitdown` | stdio | `~/.local/bin/markitdown-mcp` (macOS; optional on Windows) | none |
 | `claude-design` | http | `https://api.anthropic.com/v1/design/mcp` | Claude account, via `/design-login` |
-| `agentmemory` | stdio | `npx -y @agentmemory/mcp` | none; needs the local agentmemory server on port 3111 |
 
 Reinstall:
 
@@ -532,7 +518,6 @@ claude mcp add --scope user playwright -- npx -y @playwright/mcp@latest
 claude mcp add --scope user sequential-thinking -- npx @modelcontextprotocol/server-sequential-thinking
 claude mcp add --scope user markitdown -- "$HOME/.local/bin/markitdown-mcp"
 claude mcp add --scope user --transport http claude-design https://api.anthropic.com/v1/design/mcp
-claude mcp add --scope user agentmemory -- npx -y @agentmemory/mcp
 ```
 
 Verify with `claude mcp list`.
@@ -545,11 +530,10 @@ later. Every other server is either unauthenticated or uses the Claude account's
 
 ### Plugin-provided MCP servers
 
-The `context7`, `playwright`, `chrome-devtools-mcp` and `agentmemory` plugins each ship their own MCP
-server, so those appear twice in a session (once as the user-scope server above, once namespaced as
+The `context7`, `playwright` and `chrome-devtools-mcp` plugins each ship their own MCP server, so those
+appear twice in a session (once as the user-scope server above, once namespaced as
 `plugin_<name>_<server>`). Harmless, but worth knowing before debugging a "duplicate tools" surprise —
-removing the user-scope `context7`, `playwright` and `agentmemory` entries is safe if only the plugin
-copies are wanted.
+removing the user-scope `context7` and `playwright` entries is safe if only the plugin copies are wanted.
 
 ---
 
@@ -620,8 +604,7 @@ machines; let it re-sync.
 
 None configured in `settings.json`.
 
-The active hooks all come from plugins: the `SessionStart` hook shipped by `caveman`, and the lifecycle
-hooks shipped by `agentmemory` (see [section 3](#3-plugins)). If a hook is wanted
+The only active hook is the `SessionStart` hook shipped by the `caveman` plugin. If a hook is wanted
 later, it goes in `settings.json` under `hooks` — the harness runs it, so it cannot be expressed as a
 memory or a rule.
 
@@ -647,8 +630,8 @@ After `install.sh` and `/login`:
 
 ```bash
 claude --version                       # 2.1.292 or newer
-claude plugin list                     # 10 installed plugins enabled, plus 4 synced from claude.ai
-claude mcp list                        # macOS: 6 servers; Windows: 5 (+ markitdown if installed)
+claude plugin list                     # 9 installed plugins enabled, plus 4 synced from claude.ai
+claude mcp list                        # macOS: 5 servers; Windows: 4 (+ markitdown if installed)
 ls -l ~/.claude/rules/                 # code-comments.md, context7.md, model-usage.md,
                                        # subagent-models.md, test-runs.md
 ls -l ~/.claude/skills/                # find-docs, context7-mcp, synced/ (+ caveman symlinks on macOS)

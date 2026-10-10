@@ -24,8 +24,7 @@
     "chrome-devtools-mcp@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "playground@claude-plugins-official": true,
-    "swift-lsp@claude-plugins-official": true,
-    "agentmemory@agentmemory": true
+    "swift-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
@@ -38,12 +37,6 @@
       "source": {
         "source": "github",
         "repo": "JuliusBrussee/caveman"
-      }
-    },
-    "agentmemory": {
-      "source": {
-        "source": "github",
-        "repo": "rohitg00/agentmemory"
       }
     }
   },
@@ -61,8 +54,8 @@
     "mode": "hold"
   },
   "skipDangerousModePermissionPrompt": true,
+  "skipWorkflowUsageWarning": true,
   "theme": "dark-daltonized",
   "agentPushNotifEnabled": true,
-  "voiceEnabled": true,
-  "skipWorkflowUsageWarning": true
+  "voiceEnabled": true
 }
