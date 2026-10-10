@@ -370,11 +370,19 @@ a machine where that trade-off is acceptable.
 ### Commit attribution
 
 ```json
-"attribution": { "commit": "", "pr": "" }
+"attribution": { "commit": "", "pr": "", "sessionUrl": false }
 ```
 
 Empty strings disable the "Generated with Claude Code" trailer on commits and the equivalent line on
-pull requests.
+pull requests. `sessionUrl: false` also leaves the Claude Code session link out of that text.
+
+### Workflow usage warning
+
+```json
+"skipWorkflowUsageWarning": true
+```
+
+Skips the usage warning shown before a multi-agent workflow starts.
 
 ### Plugins and marketplaces
 
@@ -538,6 +546,8 @@ project. There is no `~/.claude/CLAUDE.md` on this setup — the rules directory
 | --- | --- |
 | [`rules/code-comments.md`](rules/code-comments.md) | Minimal-comment policy across every language. Zero inline comments by default; a comment is treated as a defect unless it documents a non-obvious invariant, a specific prevented bug, an external spec reference, a deliberate convention deviation, or unexpressible type info. Caps allowed comments at ~1 per 30 lines, max 2 lines each. Reasoning belongs in commit messages, PRs or `docs/`, never in source. |
 | [`rules/context7.md`](rules/context7.md) | Forces the `ctx7` CLI for any library/framework/SDK/API/CLI/cloud-service question, even well-known ones, in preference to web search and to training data. Documents the two-step flow (`ctx7 library <name>` to resolve an `/org/project` id, then `ctx7 docs <id> "<query>"`), one concept per query, max 3 commands per question, and explicitly forbids silently falling back to training data on a quota error. |
+| [`rules/model-usage.md`](rules/model-usage.md) | Hard model and effort limits for every session. Never runs any Fable model (main session, subagent, workflow or `model` override), never runs Opus at ultra or max effort, and never starts ultracode or multi-agent "ultra" runs. If a task seems to need one, Claude stops and asks first, naming the model or effort level and why; a "no" holds for the rest of that work. Agents default to Opus or Sonnet at normal effort, Haiku for cheap mechanical work. |
+| [`rules/test-runs.md`](rules/test-runs.md) | Test-run discipline for every framework (Jest, Vitest, PHPUnit/Pest, pytest, Go, RSpec, Cargo and others). While implementing, only the test files or cases the change touches run, named explicitly and in single-process / no-watch mode. The full suite runs exactly once, as the final verification step, and every failure in it is reported by name, including failures the change did not cause. |
 | [`rules/subagent-models.md`](rules/subagent-models.md) | Model routing for every subagent launch (Agent tool, workflows, parallel batches). Sonnet is the default for implementation, search, tests, docs and mockups; Opus is reserved for reviews and work Sonnet cannot do reliably (architecture, cross-cutting refactors, unclear-cause debugging, money-safety or security reasoning, consistency passes). Every Sonnet subagent gets a complete nine-part brief (goal and done criteria, context, scope, read-first paths, applicable rules, pattern to copy, method with a verify loop, known traps, report format), and user-facing, money-related or cross-cutting Sonnet output goes through an Opus review before it counts as finished. |
 
 To add a rule: drop another `.md` in `~/.claude/rules/`. No registration needed. Then run
@@ -622,7 +632,8 @@ After `install.sh` and `/login`:
 claude --version                       # 2.1.292 or newer
 claude plugin list                     # 9 installed plugins enabled, plus 4 synced from claude.ai
 claude mcp list                        # macOS: 5 servers; Windows: 4 (+ markitdown if installed)
-ls -l ~/.claude/rules/                 # code-comments.md, context7.md, subagent-models.md
+ls -l ~/.claude/rules/                 # code-comments.md, context7.md, model-usage.md,
+                                       # subagent-models.md, test-runs.md
 ls -l ~/.claude/skills/                # find-docs, context7-mcp, synced/ (+ caveman symlinks on macOS)
 test -x ~/.claude/statusline-command.sh && echo "statusline ok"
 ./sync.sh status                       # every item: same
@@ -642,7 +653,9 @@ Opus with `[xhigh]`.
 ├── rules/                     # auto-loaded global instructions (this repo: rules/)
 │   ├── code-comments.md
 │   ├── context7.md
-│   └── subagent-models.md
+│   ├── model-usage.md
+│   ├── subagent-models.md
+│   └── test-runs.md
 ├── skills/                    # local skills (this repo: skills/) + synced/ + macOS symlinks
 ├── plugins/
 │   ├── installed_plugins.json
