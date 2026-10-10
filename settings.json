@@ -1,9 +1,15 @@
 {
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
+  },
   "attribution": {
     "commit": "",
     "pr": ""
   },
-  "model": "opus[1m]",
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
+  "model": "opus",
   "statusLine": {
     "type": "command",
     "command": "bash \"$HOME/.claude/statusline-command.sh\""
@@ -25,11 +31,20 @@
         "source": "github",
         "repo": "anthropics/claude-plugins-official"
       }
+    },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
     }
   },
   "effortLevel": "high",
   "modelSettings": {
     "claude-opus-5": {
+      "effortLevel": "xhigh"
+    },
+    "claude-opus-5-5": {
       "effortLevel": "xhigh"
     }
   },
@@ -39,5 +54,6 @@
   },
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark-daltonized",
+  "agentPushNotifEnabled": true,
   "voiceEnabled": true
 }

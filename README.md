@@ -78,14 +78,26 @@ The full file lives in [`settings.json`](settings.json). What each key does:
 ### Model and reasoning
 
 ```json
-"model": "opus[1m]",
+"model": "opus",
 "effortLevel": "high",
-"modelSettings": { "claude-opus-5": { "effortLevel": "xhigh" } }
+"modelSettings": {
+  "claude-opus-5": { "effortLevel": "xhigh" },
+  "claude-opus-5-5": { "effortLevel": "xhigh" }
+}
 ```
 
-Default model is Opus with the 1M-token context window. Baseline reasoning effort is `high`; when the
-session is actually on Opus 5 it is raised to `xhigh`. The per-model block overrides the global
-`effortLevel`, so changing `effortLevel` alone will not affect Opus 5 sessions.
+Default model is Opus on the standard context window (no `[1m]` suffix). Baseline reasoning effort is
+`high`; when the session is actually on Opus 5 or Opus 5.5 it is raised to `xhigh`. The per-model blocks
+override the global `effortLevel`, so changing `effortLevel` alone will not affect those sessions.
+
+### Subagent model
+
+```json
+"env": { "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet" }
+```
+
+Subagents run on Sonnet unless a launch names a model explicitly. This pairs with
+[`rules/subagent-models.md`](rules/subagent-models.md), which tells Claude when to override it with Opus.
 
 ### Appearance
 
@@ -113,14 +125,24 @@ See [section 2](#2-status-line--the-gauge-bars).
 
 Push-to-talk rather than toggle: hold the key to dictate, release to stop.
 
+### Notifications
+
+```json
+"agentPushNotifEnabled": true
+```
+
+Lets agent sessions send push notifications.
+
 ### Permissions
 
 ```json
+"permissions": { "defaultMode": "bypassPermissions" },
 "skipDangerousModePermissionPrompt": true
 ```
 
-Suppresses the confirmation dialog when entering bypass-permissions mode. This removes a safety
-prompt — only keep it on a machine where that trade-off is acceptable.
+Every session starts in bypass-permissions mode, so tool calls run without approval prompts, and the
+confirmation dialog for entering that mode is suppressed. Both remove safety prompts — only keep them on
+a machine where that trade-off is acceptable.
 
 ### Commit attribution
 
@@ -133,7 +155,8 @@ pull requests.
 
 ### Plugins and marketplaces
 
-`enabledPlugins` and `extraKnownMarketplaces` are documented in [section 3](#3-plugins).
+`enabledPlugins` and `extraKnownMarketplaces` are documented in [section 3](#3-plugins). Both
+marketplaces (`claude-plugins-official` and `caveman`) are declared in `extraKnownMarketplaces`.
 
 ---
 
