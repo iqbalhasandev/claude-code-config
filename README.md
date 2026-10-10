@@ -273,6 +273,7 @@ project. There is no `~/.claude/CLAUDE.md` on this setup — the rules directory
 | --- | --- |
 | [`rules/code-comments.md`](rules/code-comments.md) | Minimal-comment policy across every language. Zero inline comments by default; a comment is treated as a defect unless it documents a non-obvious invariant, a specific prevented bug, an external spec reference, a deliberate convention deviation, or unexpressible type info. Caps allowed comments at ~1 per 30 lines, max 2 lines each. Reasoning belongs in commit messages, PRs or `docs/`, never in source. |
 | [`rules/context7.md`](rules/context7.md) | Forces the `ctx7` CLI for any library/framework/SDK/API/CLI/cloud-service question, even well-known ones, in preference to web search and to training data. Documents the two-step flow (`ctx7 library <name>` to resolve an `/org/project` id, then `ctx7 docs <id> "<query>"`), one concept per query, max 3 commands per question, and explicitly forbids silently falling back to training data on a quota error. |
+| [`rules/subagent-models.md`](rules/subagent-models.md) | Model routing for every subagent launch (Agent tool, workflows, parallel batches). Sonnet is the default for implementation, search, tests, docs and mockups; Opus is reserved for reviews and work Sonnet cannot do reliably (architecture, cross-cutting refactors, unclear-cause debugging, money-safety or security reasoning, consistency passes). Every Sonnet subagent gets a complete nine-part brief (goal and done criteria, context, scope, read-first paths, applicable rules, pattern to copy, method with a verify loop, known traps, report format), and user-facing, money-related or cross-cutting Sonnet output goes through an Opus review before it counts as finished. |
 
 To add a rule: drop another `.md` in `~/.claude/rules/`. No registration needed.
 
@@ -349,7 +350,7 @@ After `install.sh` and `/login`:
 claude --version                       # 2.1.278 or newer
 claude plugin list                     # 9 plugins, all enabled
 claude mcp list                        # 5 servers; claude-design needs /design-login
-ls -l ~/.claude/rules/                 # code-comments.md, context7.md
+ls -l ~/.claude/rules/                 # code-comments.md, context7.md, subagent-models.md
 ls -l ~/.claude/skills/                # symlinks + find-docs + context7-mcp
 test -x ~/.claude/statusline-command.sh && echo "statusline ok"
 ```
@@ -367,7 +368,8 @@ Opus with `[xhigh]`.
 ├── statusline-command.sh      # status line renderer (this repo: statusline-command.sh)
 ├── rules/                     # auto-loaded global instructions (this repo: rules/)
 │   ├── code-comments.md
-│   └── context7.md
+│   ├── context7.md
+│   └── subagent-models.md
 ├── skills/                    # symlinks to ~/.agents/skills + local skills + synced/
 ├── plugins/
 │   ├── installed_plugins.json
