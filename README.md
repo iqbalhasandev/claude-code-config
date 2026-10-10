@@ -6,7 +6,8 @@ plugins, MCP servers, skills and global rules.
 Point Claude Code at this repository on a fresh machine and it can configure itself without manual
 clicking. Everything here is user-scope — it applies to every project on the machine, not just one repo.
 
-**Snapshot taken:** 2026-09-21 · **Claude Code:** 2.1.278 · **Platform:** macOS (Darwin 27.0.0), zsh
+**Snapshot taken:** 2026-09-21 on macOS (Darwin 27.0.0), zsh · **Last synced:** 2026-10-10 on Windows 11
+(Git Bash) · **Claude Code:** 2.1.292
 
 ---
 
@@ -46,14 +47,13 @@ Three things need a human:
 
 | Tool | Version on the source machine | Needed for |
 | --- | --- | --- |
-| Claude Code | 2.1.278, native install | everything |
-| Node.js | 24.18.1 | `npx`-launched MCP servers, `ctx7` CLI |
-| npm | 11.16.0 | same |
-| `jq` | 1.7.1 | status line (parses the JSON Claude Code pipes in) |
-| `awk`, `date` | system BSD versions | status line gauges and reset timestamps |
-| `uv` / `uvx` | installed at `~/.local/bin` | `markitdown-mcp` |
-| Python | 3.9+ | `markitdown-mcp` |
-| `gh` | any recent | optional, for GitHub work |
+| Claude Code | 2.1.292, native install | everything |
+| Node.js | 26.9.0 | `npx`-launched MCP servers, `ctx7` CLI |
+| npm | 11.19.1 | same |
+| `jq` | 1.8.2 | status line (parses the JSON Claude Code pipes in) |
+| `awk`, `date` | BSD on macOS, GNU in Git Bash | status line gauges and reset timestamps |
+| `bash` | 5.3 (Git Bash on Windows) | status line, `install.sh` |
+| `gh` | 2.101.0 | optional, for GitHub work |
 
 Install Claude Code natively (not via npm) so `autoUpdates: false` behaves as intended:
 
@@ -61,12 +61,10 @@ Install Claude Code natively (not via npm) so `autoUpdates: false` behaves as in
 curl -fsSL https://claude.ai/install.sh | bash
 ```
 
-`jq` and `uv` on macOS:
+`jq` on macOS:
 
 ```bash
 brew install jq
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv tool install markitdown-mcp
 ```
 
 ---
@@ -78,7 +76,7 @@ The full file lives in [`settings.json`](settings.json). What each key does:
 ### Model and reasoning
 
 ```json
-"model": "opus",
+"model": "opus[1m]",
 "effortLevel": "high",
 "modelSettings": {
   "claude-opus-5": { "effortLevel": "xhigh" },
@@ -86,8 +84,8 @@ The full file lives in [`settings.json`](settings.json). What each key does:
 }
 ```
 
-Default model is Opus on the standard context window (no `[1m]` suffix). Baseline reasoning effort is
-`high`; when the session is actually on Opus 5 or Opus 5.5 it is raised to `xhigh`. The per-model blocks
+Default model is Opus with the 1M-token context window. Baseline reasoning effort is `high`; when the
+session is actually on Opus 5 or Opus 5.5 it is raised to `xhigh`. The per-model blocks
 override the global `effortLevel`, so changing `effortLevel` alone will not affect those sessions.
 
 ### Subagent model
@@ -189,8 +187,9 @@ above. A non-zero percentage always shows at least one filled cell, so a 1% usag
 empty bar. Rate-limit segments are skipped entirely when the API reports `-1` (unknown).
 
 Hard dependencies: `jq` for parsing, `awk` for the number formatting and gauge loops, and BSD `date -r`
-for the reset timestamps. On Linux, `date -r <epoch>` means something different — change those two calls
-to `date -d @<epoch>` if this is ever ported.
+for the reset timestamps. With GNU `date` (Linux, Git Bash on Windows), `date -r <epoch>` reads a file's
+modification time instead, so the call fails quietly and the gauges render without the reset-time
+suffix. Change that call to `date -d @<epoch>` to get the timestamps back there.
 
 ---
 
@@ -207,15 +206,15 @@ Nine plugins, all installed at **user** scope, all enabled:
 
 | Plugin | Marketplace | Version | What it adds |
 | --- | --- | --- | --- |
-| `superpowers` | official | 6.3.0 | Process skills: brainstorming, TDD, systematic debugging, writing/executing plans, code review, git worktrees |
-| `frontend-design` | official | `c447c320` | Visual design guidance for new or reshaped UI |
-| `context7` | official | `c447c320` | Context7 MCP server + doc-lookup skill |
-| `playwright` | official | `c447c320` | Playwright browser-automation MCP server |
+| `superpowers` | official | 6.4.1 | Process skills: brainstorming, TDD, systematic debugging, writing/executing plans, code review, git worktrees |
+| `frontend-design` | official | `b860d6f2` | Visual design guidance for new or reshaped UI |
+| `context7` | official | `b860d6f2` | Context7 MCP server + doc-lookup skill |
+| `playwright` | official | `b860d6f2` | Playwright browser-automation MCP server |
 | `chrome-devtools-mcp` | official | 1.9.0 | Chrome DevTools MCP: performance traces, network, a11y, memory, cookies |
 | `claude-code-setup` | official | 1.0.0 | Automation recommender — suggests hooks/subagents/skills for a codebase |
-| `playground` | official | `c447c320` | Builds interactive single-file HTML playgrounds |
+| `playground` | official | `b860d6f2` | Builds interactive single-file HTML playgrounds |
 | `swift-lsp` | official | 1.0.0 | Swift language server integration |
-| `caveman` | caveman | `a0109974` | Compressed-output mode, cavecrew subagents, Caveman Cloud cost tooling |
+| `caveman` | caveman | 2.7.0 | Compressed-output mode, cavecrew subagents, workflow skills, Caveman Cloud cost tooling |
 
 Reinstall:
 
@@ -237,6 +236,21 @@ claude plugin install caveman@caveman
 `install.sh` does this, then writes the `enabledPlugins` block so the set is enabled without further
 prompting.
 
+### Plugins synced from claude.ai
+
+Four more plugins load automatically from the Claude account after `/login`, under
+`~/.claude/plugins/synced/`. They are not installed by `install.sh` and do not appear in `enabledPlugins`:
+
+| Plugin | Version | What it adds |
+| --- | --- | --- |
+| `design` | 1.2.0 | Design critique, accessibility review, design-system, UX copy, handoff and user-research skills |
+| `product-management` | 1.2.0 | Specs, roadmaps, sprint planning, stakeholder updates, research synthesis, competitive briefs |
+| `engineering` | 1.2.0 | Code review, architecture/ADRs, system design, debugging, incident response, testing strategy, docs |
+| `data` | 1.1.0 | SQL, data exploration, statistics, visualisation, dashboards, analysis validation |
+
+Several of them ship MCP connectors (Figma, Linear, Notion, Slack, Datadog, Amplitude and others) that
+stay unauthenticated until each one is connected.
+
 ### Note on the caveman plugin
 
 It registers a `SessionStart` hook that injects a persistent "caveman mode" instruction into every
@@ -248,14 +262,13 @@ session with `/caveman off`, or drop the plugin if that style is unwanted. No ho
 
 ## 4. MCP servers
 
-Five servers at user scope. Stored in `~/.claude.json` under `mcpServers`, not in `settings.json`.
+Four servers at user scope. Stored in `~/.claude.json` under `mcpServers`, not in `settings.json`.
 
 | Name | Transport | Endpoint / command | Auth |
 | --- | --- | --- | --- |
 | `context7` | http | `https://mcp.context7.com/mcp` | `Authorization: Bearer <CONTEXT7_API_KEY>` |
 | `playwright` | stdio | `npx -y @playwright/mcp@latest` | none |
 | `sequential-thinking` | stdio | `npx @modelcontextprotocol/server-sequential-thinking` | none |
-| `markitdown` | stdio | `~/.local/bin/markitdown-mcp` | none |
 | `claude-design` | http | `https://api.anthropic.com/v1/design/mcp` | Claude account, via `/design-login` |
 
 Reinstall:
@@ -266,7 +279,6 @@ claude mcp add --scope user --transport http context7 https://mcp.context7.com/m
 
 claude mcp add --scope user playwright -- npx -y @playwright/mcp@latest
 claude mcp add --scope user sequential-thinking -- npx @modelcontextprotocol/server-sequential-thinking
-claude mcp add --scope user markitdown -- "$HOME/.local/bin/markitdown-mcp"
 claude mcp add --scope user --transport http claude-design https://api.anthropic.com/v1/design/mcp
 ```
 
@@ -306,18 +318,19 @@ To add a rule: drop another `.md` in `~/.claude/rules/`. No registration needed.
 
 Three separate sources feed the skill list.
 
-### a. `~/.agents/skills` — symlinked into `~/.claude/skills`
+### a. Plugin skills
 
-Installed from `JuliusBrussee/caveman` and tracked in `~/.agents/.skill-lock.json`. Each entry in
-`~/.claude/skills/` is a symlink to `~/.agents/skills/<name>`:
+Every enabled plugin contributes its own namespaced skills. The `caveman` plugin ships the full caveman
+set as `caveman:<name>`:
 
 `cavecrew`, `caveman`, `caveman-commit`, `caveman-compress`, `caveman-discover`,
-`caveman-evidence-review`, `caveman-explore`, `caveman-help`, `caveman-learn`, `caveman-manage`,
-`caveman-optimize`, `caveman-review`, `caveman-setup`, `caveman-stats`, `investigate-first`,
-`lean-build`, `migration`, `safe-refactor`, `surgical-patch`, `verify-and-stop`
+`caveman-evidence-review`, `caveman-explore`, `caveman-help`, `caveman-init`, `caveman-learn`,
+`caveman-manage`, `caveman-optimize`, `caveman-review`, `caveman-setup`, `caveman-stats`,
+`investigate-first`, `lean-build`, `migration`, `safe-refactor`, `surgical-patch`, `verify-and-stop`
 
-`~/.agents/skills` also holds `compress`, `find-skills` and `context7-mcp`, which are **not** symlinked
-into `~/.claude/skills` and therefore not active.
+Because the plugin provides them, no separate `~/.agents/skills` clone or symlinks are needed.
+`~/.agents/skills` on this machine holds only copies of `find-docs` and `context7-mcp`, identical to the
+local directories below.
 
 The workflow skills are the genuinely reusable part of that set — `investigate-first` (evidence-ranked
 diagnosis before editing), `lean-build` (scope-bounded feature work), `migration` (reversible
@@ -326,7 +339,7 @@ bug fix), `verify-and-stop` (validation without scope creep).
 
 ### b. Local skill directories
 
-Two real directories (not symlinks) in `~/.claude/skills/`, each a single `SKILL.md`:
+Two real directories in `~/.claude/skills/`, each a single `SKILL.md`:
 
 - `find-docs` — documentation lookup for any library/framework/SDK/CLI/cloud service.
 - `context7-mcp` — same intent, routed through the Context7 MCP server instead of the CLI.
@@ -335,9 +348,10 @@ Both are in this repo under [`skills/`](skills/) and are copied in by the instal
 
 ### c. Skills synced from claude.ai
 
-`~/.claude/skills/synced/` is populated automatically from the Claude account after `/login` — no manual
-step. On this machine it carries: `docs`, `docx`, `pdf`, `pptx`, `xlsx`, `morning`, `import-memory`,
-`skill-creator`, `prompt-master`. Do not copy this directory between machines; let it re-sync.
+`~/.claude/skills/synced/<account-id>/` is populated automatically from the Claude account after
+`/login` — no manual step. On this machine it carries: `docs`, `docx`, `google-workspace`, `pdf`, `pptx`,
+`xlsx`, `morning`, `import-memory`, `skill-creator`, `prompt-master`. Do not copy this directory between
+machines; let it re-sync.
 
 ---
 
@@ -360,7 +374,7 @@ memory or a rule.
 | `~/.claude/projects/*/memory/` | Per-project memories, machine-local and often private. Rebuild naturally. |
 | `~/.claude/history.jsonl`, `sessions/`, `telemetry/`, `shell-snapshots/`, `paste-cache/` | Session state and caches. Regenerated. |
 | `~/.claude/plugins/cache/`, `marketplaces/` | Regenerated by `claude plugin install`. |
-| `~/.claude/skills/synced/` | Re-synced from the Claude account on login. |
+| `~/.claude/skills/synced/`, `~/.claude/plugins/synced/` | Re-synced from the Claude account on login. |
 | `~/.claude/remote-settings.json`, `policy-limits.json` | Server-issued. Refetched. |
 
 ---
@@ -370,11 +384,11 @@ memory or a rule.
 After `install.sh` and `/login`:
 
 ```bash
-claude --version                       # 2.1.278 or newer
-claude plugin list                     # 9 plugins, all enabled
-claude mcp list                        # 5 servers; claude-design needs /design-login
+claude --version                       # 2.1.292 or newer
+claude plugin list                     # 9 installed plugins enabled, plus 4 synced from claude.ai
+claude mcp list                        # 4 servers; claude-design needs /design-login
 ls -l ~/.claude/rules/                 # code-comments.md, context7.md, subagent-models.md
-ls -l ~/.claude/skills/                # symlinks + find-docs + context7-mcp
+ls -l ~/.claude/skills/                # find-docs, context7-mcp, synced/
 test -x ~/.claude/statusline-command.sh && echo "statusline ok"
 ```
 
@@ -393,16 +407,13 @@ Opus with `[xhigh]`.
 │   ├── code-comments.md
 │   ├── context7.md
 │   └── subagent-models.md
-├── skills/                    # symlinks to ~/.agents/skills + local skills + synced/
+├── skills/                    # local skills (this repo: skills/) + synced/
 ├── plugins/
 │   ├── installed_plugins.json
 │   ├── known_marketplaces.json
-│   └── cache/                 # plugin payloads
+│   ├── cache/                 # plugin payloads
+│   └── synced/                # plugins synced from claude.ai
 └── projects/<slug>/memory/    # per-project memory files
-
-~/.agents/
-├── .skill-lock.json           # provenance for github-sourced skills
-└── skills/
 
 ~/.claude.json                 # account state + mcpServers (secrets live here)
 ```

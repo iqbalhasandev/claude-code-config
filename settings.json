@@ -9,7 +9,7 @@
   "permissions": {
     "defaultMode": "bypassPermissions"
   },
-  "model": "opus",
+  "model": "opus[1m]",
   "statusLine": {
     "type": "command",
     "command": "bash \"$HOME/.claude/statusline-command.sh\""

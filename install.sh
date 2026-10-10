@@ -53,35 +53,6 @@ for skill in "$REPO_DIR"/skills/*/; do
   info "installed skill: $name"
 done
 
-# ------------------------------------------------------------- caveman skill set
-
-if [ -d "$HOME/.agents/skills" ]; then
-  info "~/.agents/skills already present — skipping clone"
-else
-  info "installing caveman skills into ~/.agents/skills"
-  tmp="$(mktemp -d)"
-  if git clone --depth 1 https://github.com/JuliusBrussee/caveman.git "$tmp/caveman" >/dev/null 2>&1; then
-    mkdir -p "$HOME/.agents/skills"
-    cp -R "$tmp/caveman/skills/." "$HOME/.agents/skills/"
-    rm -rf "$tmp"
-  else
-    warn "could not clone JuliusBrussee/caveman — skipping the ~/.agents/skills set"
-  fi
-fi
-
-CAVEMAN_SKILLS=(
-  cavecrew caveman caveman-commit caveman-compress caveman-discover
-  caveman-evidence-review caveman-explore caveman-help caveman-learn
-  caveman-manage caveman-optimize caveman-review caveman-setup caveman-stats
-  investigate-first lean-build migration safe-refactor surgical-patch verify-and-stop
-)
-for name in "${CAVEMAN_SKILLS[@]}"; do
-  src="$HOME/.agents/skills/$name"
-  [ -d "$src" ] || continue
-  ln -sfn "../../.agents/skills/$name" "$CLAUDE_DIR/skills/$name"
-done
-info "linked ${#CAVEMAN_SKILLS[@]} skills from ~/.agents/skills"
-
 # --------------------------------------------------------------------- plugins
 
 info "adding marketplaces"
@@ -133,12 +104,6 @@ fi
 add_mcp playwright --scope user playwright -- npx -y @playwright/mcp@latest
 add_mcp sequential-thinking --scope user sequential-thinking -- npx @modelcontextprotocol/server-sequential-thinking
 add_mcp claude-design --scope user --transport http claude-design https://api.anthropic.com/v1/design/mcp
-
-if [ -x "$HOME/.local/bin/markitdown-mcp" ]; then
-  add_mcp markitdown --scope user markitdown -- "$HOME/.local/bin/markitdown-mcp"
-else
-  warn "markitdown-mcp not found. Install it, then rerun: uv tool install markitdown-mcp"
-fi
 
 # ------------------------------------------------------------------------- done
 
