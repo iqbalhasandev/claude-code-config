@@ -17,7 +17,7 @@ IFS=$'\t' read -r model ctx_used ctx_size ctx_pct cost lim_5h lim_7d effort rese
       (.effort.level // "-"),
       (.rate_limits.five_hour.resets_at // 0),
       (.rate_limits.seven_day.resets_at // 0)
-    ] | @tsv'
+    ] | @tsv' | tr -d '\r'
 )"
 
 # 49359 -> 49.4k ; 1000000 -> 1.0M
@@ -79,7 +79,7 @@ limit_part() {
   [ "$pct" -lt 0 ] 2>/dev/null && return
   color=$(level_color "$pct")
   if [ "${epoch:-0}" -gt 0 ] 2>/dev/null; then
-    reset=$(date -r "$epoch" "+$fmt" 2>/dev/null)
+    reset=$(date -d "@$epoch" "+$fmt" 2>/dev/null || date -r "$epoch" "+$fmt" 2>/dev/null)
     [ -n "$reset" ] && reset=" ($reset)"
   fi
   parts+=("$(printf '\033[38;5;240m%s\033[0m \033[38;5;%sm%s %s%%\033[0m\033[38;5;240m%s\033[0m' \

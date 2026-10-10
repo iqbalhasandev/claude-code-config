@@ -1,86 +1,78 @@
 #!/usr/bin/env bash
 # Reproduce the global Claude Code configuration described in README.md.
-# Idempotent: existing settings.json and statusline-command.sh are backed up before being replaced.
+# Idempotent: settings.json and statusline-command.sh are backed up before sync.sh replaces them.
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
-STAMP="$(date +%Y%m%d-%H%M%S)"
 
 info()  { printf '\033[38;5;71m==>\033[0m %s\n' "$1"; }
 warn()  { printf '\033[38;5;178m warn\033[0m %s\n' "$1"; }
 fail()  { printf '\033[38;5;203merror\033[0m %s\n' "$1" >&2; exit 1; }
 
-backup() {
-  [ -e "$1" ] || return 0
-  cp -R "$1" "$1.bak.$STAMP"
-  info "backed up $1 -> $1.bak.$STAMP"
-}
+case "$(uname -s)" in
+  Darwin)               PLATFORM=macos ;;
+  MINGW*|MSYS*|CYGWIN*) PLATFORM=windows ;;
+  *)                    PLATFORM=linux ;;
+esac
+
+if [ "$PLATFORM" = windows ]; then
+  CLAUDE_INSTALL_HINT="irm https://claude.ai/install.ps1 | iex   (in PowerShell)"
+  JQ_INSTALL_HINT="winget install -e --id jqlang.jq"
+else
+  CLAUDE_INSTALL_HINT="curl -fsSL https://claude.ai/install.sh | bash"
+  JQ_INSTALL_HINT="brew install jq"
+fi
 
 # ---------------------------------------------------------------- prerequisites
 
-command -v claude >/dev/null || fail "claude not found. Install: curl -fsSL https://claude.ai/install.sh | bash"
+command -v claude >/dev/null || fail "claude not found. Install: $CLAUDE_INSTALL_HINT"
 command -v node   >/dev/null || fail "node not found. Install Node 20+ (24.x recommended)."
 command -v npx    >/dev/null || fail "npx not found (ships with npm)."
-command -v jq     >/dev/null || warn "jq not found — the status line will render empty. brew install jq"
+command -v jq     >/dev/null || fail "jq not found — needed for settings.json and the status line. $JQ_INSTALL_HINT"
 
+info "platform: $PLATFORM"
 info "claude $(claude --version 2>/dev/null | head -1)"
 
 mkdir -p "$CLAUDE_DIR/rules" "$CLAUDE_DIR/skills"
 
-# ---------------------------------------------------------------------- settings
-
-backup "$CLAUDE_DIR/settings.json"
-cp "$REPO_DIR/settings.json" "$CLAUDE_DIR/settings.json"
-info "installed settings.json"
-
-backup "$CLAUDE_DIR/statusline-command.sh"
-cp "$REPO_DIR/statusline-command.sh" "$CLAUDE_DIR/statusline-command.sh"
-chmod +x "$CLAUDE_DIR/statusline-command.sh"
-info "installed statusline-command.sh"
-
-# ------------------------------------------------------------------------- rules
-
-cp "$REPO_DIR"/rules/*.md "$CLAUDE_DIR/rules/"
-info "installed rules: $(ls "$REPO_DIR"/rules | tr '\n' ' ')"
-
-# ------------------------------------------------------------------ local skills
-
-for skill in "$REPO_DIR"/skills/*/; do
-  name="$(basename "$skill")"
-  rm -rf "$CLAUDE_DIR/skills/$name"
-  cp -R "$skill" "$CLAUDE_DIR/skills/$name"
-  info "installed skill: $name"
-done
+bash "$REPO_DIR/sync.sh" import
 
 # ------------------------------------------------------------- caveman skill set
 
-if [ -d "$HOME/.agents/skills" ]; then
-  info "~/.agents/skills already present — skipping clone"
-else
-  info "installing caveman skills into ~/.agents/skills"
-  tmp="$(mktemp -d)"
-  if git clone --depth 1 https://github.com/JuliusBrussee/caveman.git "$tmp/caveman" >/dev/null 2>&1; then
-    mkdir -p "$HOME/.agents/skills"
-    cp -R "$tmp/caveman/skills/." "$HOME/.agents/skills/"
-    rm -rf "$tmp"
+link_caveman_skills() {
+  if [ -d "$HOME/.agents/skills" ]; then
+    info "~/.agents/skills already present — skipping clone"
   else
-    warn "could not clone JuliusBrussee/caveman — skipping the ~/.agents/skills set"
+    info "installing caveman skills into ~/.agents/skills"
+    tmp="$(mktemp -d)"
+    if git clone --depth 1 https://github.com/JuliusBrussee/caveman.git "$tmp/caveman" >/dev/null 2>&1; then
+      mkdir -p "$HOME/.agents/skills"
+      cp -R "$tmp/caveman/skills/." "$HOME/.agents/skills/"
+      rm -rf "$tmp"
+    else
+      warn "could not clone JuliusBrussee/caveman — skipping the ~/.agents/skills set"
+    fi
   fi
-fi
 
-CAVEMAN_SKILLS=(
-  cavecrew caveman caveman-commit caveman-compress caveman-discover
-  caveman-evidence-review caveman-explore caveman-help caveman-learn
-  caveman-manage caveman-optimize caveman-review caveman-setup caveman-stats
-  investigate-first lean-build migration safe-refactor surgical-patch verify-and-stop
-)
-for name in "${CAVEMAN_SKILLS[@]}"; do
-  src="$HOME/.agents/skills/$name"
-  [ -d "$src" ] || continue
-  ln -sfn "../../.agents/skills/$name" "$CLAUDE_DIR/skills/$name"
-done
-info "linked ${#CAVEMAN_SKILLS[@]} skills from ~/.agents/skills"
+  local skills=(
+    cavecrew caveman caveman-commit caveman-compress caveman-discover
+    caveman-evidence-review caveman-explore caveman-help caveman-learn
+    caveman-manage caveman-optimize caveman-review caveman-setup caveman-stats
+    investigate-first lean-build migration safe-refactor surgical-patch verify-and-stop
+  )
+  for name in "${skills[@]}"; do
+    [ -d "$HOME/.agents/skills/$name" ] || continue
+    ln -sfn "../../.agents/skills/$name" "$CLAUDE_DIR/skills/$name"
+  done
+  info "linked ${#skills[@]} skills from ~/.agents/skills"
+}
+
+if [ "$PLATFORM" = windows ]; then
+  info "windows: skipping ~/.agents/skills links — the caveman plugin provides these skills as caveman:<name>"
+else
+  link_caveman_skills
+fi
 
 # --------------------------------------------------------------------- plugins
 
@@ -134,10 +126,17 @@ add_mcp playwright --scope user playwright -- npx -y @playwright/mcp@latest
 add_mcp sequential-thinking --scope user sequential-thinking -- npx @modelcontextprotocol/server-sequential-thinking
 add_mcp claude-design --scope user --transport http claude-design https://api.anthropic.com/v1/design/mcp
 
-if [ -x "$HOME/.local/bin/markitdown-mcp" ]; then
-  add_mcp markitdown --scope user markitdown -- "$HOME/.local/bin/markitdown-mcp"
+MARKITDOWN_BIN="$(command -v markitdown-mcp 2>/dev/null || true)"
+for candidate in "$HOME/.local/bin/markitdown-mcp" "$HOME/.local/bin/markitdown-mcp.exe"; do
+  if [ -z "$MARKITDOWN_BIN" ] && [ -x "$candidate" ]; then
+    MARKITDOWN_BIN="$candidate"
+  fi
+done
+
+if [ -n "$MARKITDOWN_BIN" ]; then
+  add_mcp markitdown --scope user markitdown -- "$MARKITDOWN_BIN"
 else
-  warn "markitdown-mcp not found. Install it, then rerun: uv tool install markitdown-mcp"
+  warn "markitdown-mcp not found (optional). Install it, then rerun: uv tool install markitdown-mcp"
 fi
 
 # ------------------------------------------------------------------------- done
