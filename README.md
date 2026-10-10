@@ -6,8 +6,12 @@ plugins, MCP servers, skills and global rules.
 Point Claude Code at this repository on a fresh machine and it can configure itself without manual
 clicking. Everything here is user-scope — it applies to every project on the machine, not just one repo.
 
-**Snapshot taken:** 2026-09-21 on macOS (Darwin 27.0.0), zsh · **Last synced:** 2026-10-10 on Windows 11
-(Git Bash) · **Claude Code:** 2.1.292
+**Snapshot taken:** 2026-09-21 on macOS (Darwin 27.0.0), zsh, Claude Code 2.1.278 ·
+**Windows support added:** 2026-10-10 on Windows 11 (Git Bash), Claude Code 2.1.292
+
+**Supported platforms:** macOS and Windows 11. Both use the same `settings.json`, rules, skills and
+`install.sh`. The installer detects the platform and handles the differences. See the
+[Platform guide](#platform-guide) for step-by-step setup on each one.
 
 ---
 
@@ -18,10 +22,23 @@ clicking. Everything here is user-scope — it applies to every project on the m
 Open Claude Code on the new machine and paste:
 
 > Clone `https://github.com/iqbalhasandev/claude-code-config` and follow its README to reproduce this
-> global Claude Code configuration on this machine. Run `install.sh`, then tell me what still needs my
-> input (API keys, OAuth logins).
+> global Claude Code configuration on this machine. Follow the Platform guide for this OS, run
+> `install.sh`, then tell me what still needs my input (API keys, OAuth logins).
+
+On a machine that is already set up, use [Keeping machines in sync](#keeping-machines-in-sync) instead.
 
 ### Option B — run the installer yourself
+
+macOS (Terminal):
+
+```bash
+git clone https://github.com/iqbalhasandev/claude-code-config.git
+cd claude-code-config
+export CONTEXT7_API_KEY="ctx7sk-..."   # optional; skip and Context7 runs on the free tier
+./install.sh
+```
+
+Windows (Git Bash, not PowerShell or CMD):
 
 ```bash
 git clone https://github.com/iqbalhasandev/claude-code-config.git
@@ -35,7 +52,7 @@ The installer is idempotent. It backs up any existing `~/.claude/settings.json` 
 
 ### After the installer
 
-Three things need a human:
+Three things need a human, on both platforms:
 
 1. `claude` → `/login` — authenticate the Claude account.
 2. `npx ctx7@latest login` — or set `CONTEXT7_API_KEY`, for higher Context7 doc-fetch limits.
@@ -43,29 +60,237 @@ Three things need a human:
 
 ---
 
-## Prerequisites
+## Platform guide
 
-| Tool | Version on the source machine | Needed for |
+### Differences at a glance
+
+| | macOS | Windows 11 |
+| --- | --- | --- |
+| Shell for `install.sh` and the status line | zsh / bash, built in | Git Bash, from Git for Windows |
+| Install Claude Code | `curl -fsSL https://claude.ai/install.sh \| bash` | `irm https://claude.ai/install.ps1 \| iex` in PowerShell |
+| Package manager for tools | Homebrew | winget |
+| `~/.claude` | `/Users/<you>/.claude` | `C:\Users\<you>\.claude` (`~/.claude` in Git Bash) |
+| `date` used by the status line | BSD | GNU — the script handles both |
+| Caveman skills | `caveman` plugin, plus `~/.agents/skills` symlinks | `caveman` plugin only; the installer skips the symlinks |
+| `markitdown` MCP server | installed with `uv` | optional; added only when `markitdown-mcp` is installed |
+| Line endings | LF | LF for `*.sh`, enforced by `.gitattributes` |
+
+### macOS setup
+
+1. Install Claude Code natively (not via npm), so `autoUpdates: false` behaves as intended:
+
+   ```bash
+   curl -fsSL https://claude.ai/install.sh | bash
+   ```
+
+2. Install the tools:
+
+   ```bash
+   brew install node jq gh
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   uv tool install markitdown-mcp
+   ```
+
+3. Clone the repository and run `./install.sh` (see [Quick start](#option-b--run-the-installer-yourself)).
+4. Do the three [after-installer steps](#after-the-installer).
+
+Versions on the macOS source machine:
+
+| Tool | Version | Needed for |
+| --- | --- | --- |
+| Claude Code | 2.1.278, native install | everything |
+| Node.js | 24.18.1 | `npx`-launched MCP servers, `ctx7` CLI |
+| npm | 11.16.0 | same |
+| `jq` | 1.7.1 | status line (parses the JSON Claude Code pipes in) |
+| `awk`, `date` | system BSD versions | status line gauges and reset timestamps |
+| `uv` / `uvx` | installed at `~/.local/bin` | `markitdown-mcp` |
+| Python | 3.9+ | `markitdown-mcp` |
+| `gh` | any recent | optional, for GitHub work |
+
+macOS needs no settings beyond the shared `settings.json`.
+
+### Windows setup
+
+1. Install Git for Windows. It provides Git Bash, which Claude Code's Bash tool, the status line and
+   `install.sh` all need:
+
+   ```powershell
+   winget install -e --id Git.Git
+   ```
+
+2. Install Claude Code natively from PowerShell (no Administrator needed):
+
+   ```powershell
+   irm https://claude.ai/install.ps1 | iex
+   ```
+
+3. Install the tools:
+
+   ```powershell
+   winget install -e --id OpenJS.NodeJS.LTS
+   winget install -e --id jqlang.jq
+   winget install -e --id GitHub.cli
+   ```
+
+   Optional, only if the `markitdown` MCP server is wanted:
+
+   ```powershell
+   winget install -e --id astral-sh.uv
+   uv tool install markitdown-mcp
+   ```
+
+4. Close and reopen the terminal so the new tools are on `PATH`.
+5. Open **Git Bash**, clone the repository and run `./install.sh` (see
+   [Quick start](#option-b--run-the-installer-yourself)). From PowerShell, run it through Git Bash
+   instead:
+
+   ```powershell
+   & "C:\Program Files\Git\bin\bash.exe" ./install.sh
+   ```
+
+6. Do the three [after-installer steps](#after-the-installer).
+
+Versions on the Windows source machine:
+
+| Tool | Version | Needed for |
 | --- | --- | --- |
 | Claude Code | 2.1.292, native install | everything |
+| Git for Windows (Git Bash) | bash 5.3 | Bash tool, status line, `install.sh` |
 | Node.js | 26.9.0 | `npx`-launched MCP servers, `ctx7` CLI |
 | npm | 11.19.1 | same |
-| `jq` | 1.8.2 | status line (parses the JSON Claude Code pipes in) |
-| `awk`, `date` | BSD on macOS, GNU in Git Bash | status line gauges and reset timestamps |
-| `bash` | 5.3 (Git Bash on Windows) | status line, `install.sh` |
+| `jq` | 1.8.2 | status line |
+| `awk`, `date` | GNU, bundled with Git Bash | status line gauges and reset timestamps |
 | `gh` | 2.101.0 | optional, for GitHub work |
 
-Install Claude Code natively (not via npm) so `autoUpdates: false` behaves as intended:
+#### Windows-only settings
+
+The shared `settings.json` works on Windows unchanged. Add these to `~/.claude/settings.json` only on a
+Windows machine that needs them. `sync.sh` keeps `CLAUDE_CODE_GIT_BASH_PATH` on the machine: `publish`
+never sends it to the repository, and `import` leaves it in place.
+
+- **Claude Code cannot find Git Bash.** Point it at `bash.exe` inside the existing `env` block:
+
+  ```json
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
+    "CLAUDE_CODE_GIT_BASH_PATH": "C:\\Program Files\\Git\\bin\\bash.exe"
+  }
+  ```
+
+- **`swift-lsp` is not useful without a Swift toolchain.** It is harmless, but it can be turned off by
+  setting `"swift-lsp@claude-plugins-official": false` in `enabledPlugins`.
+
+#### Windows troubleshooting
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| `$'\r': command not found` or `set: pipefail\r: invalid option name` when running `install.sh` | The script was checked out with CRLF line endings | Fresh clones are protected by `.gitattributes`. For an old clone: `sed -i 's/\r$//' install.sh sync.sh statusline-command.sh` |
+| Status line is empty | `jq` is missing or not on `PATH` in Git Bash | `winget install -e --id jqlang.jq`, then reopen the terminal |
+| `npx`-based MCP server does not start | Native Windows cannot always launch `npx` directly | Re-add it through `cmd`: `claude mcp add --scope user playwright -- cmd /c npx -y @playwright/mcp@latest` |
+| `claude: command not found` in Git Bash | `PATH` not refreshed after install | Reopen Git Bash, or run `claude` from PowerShell once |
+
+---
+
+## Keeping machines in sync
+
+Every machine — macOS, Windows or Linux — uses one shared copy of the config below. [`sync.sh`](sync.sh)
+moves it between `~/.claude` and this repository. Branches and pull requests move it between machines.
+Nothing is ever pushed straight to `main`.
+
+### What is shared and what is not
+
+| Shared on every machine (synced) | Stays on each machine (never synced) |
+| --- | --- |
+| `settings.json`, except machine-only keys | `env.CLAUDE_CODE_GIT_BASH_PATH` and any key listed in `MACHINE_ONLY_ENV` in `sync.sh` |
+| `statusline-command.sh` | `~/.claude.json` — MCP servers, account, OAuth |
+| `rules/*.md` | memories, sessions, history, caches |
+| `skills/<name>/` — real directories only, not `synced/`, not symlinks | plugin and MCP installs — `install.sh` handles those |
+
+### Commands
+
+Run from the repository root: Terminal on macOS, Git Bash on Windows. All commands need `jq`; `publish`
+also needs `gh` logged in (`gh auth login`).
+
+| Command | What it does |
+| --- | --- |
+| `./sync.sh status` | Lists every shared item as `same`, `differs`, `machine-only` or `repo-only`. Changes nothing. |
+| `./sync.sh publish` | Creates branch `sync/<platform>-<timestamp>` from `origin/main`, exports this machine's config, commits, pushes and opens a PR. Deletes the branch again if nothing changed. |
+| `./sync.sh import` | Copies the repo config into `~/.claude`. Backs up `settings.json`, `statusline-command.sh` and changed rules to `*.bak.<timestamp>` first. Keeps machine-only keys. |
+| `./sync.sh export` | Copies `~/.claude` into the repo working tree only — no branch, commit or PR. |
+| `--prune` | With `publish` or `export`: also deletes repo rules and skills that are missing on this machine. Without it they are kept. |
+
+### This machine has new rules, settings or skills — publish them
+
+Use this after adding a rule, changing `settings.json` or editing a local skill on any machine:
 
 ```bash
-curl -fsSL https://claude.ai/install.sh | bash
+cd claude-code-config
+git switch main && git pull
+./sync.sh status        # check what differs before publishing
+./sync.sh publish       # new branch + commit + push + PR; prints the PR link
 ```
 
-`jq` on macOS:
+Then review and merge the PR on GitHub.
+
+`publish` stops without changing anything when:
+
+- the repository has uncommitted changes — commit or stash them first;
+- `settings.json` has an `env` key that looks like a secret (`KEY`, `TOKEN`, `SECRET`, `PASSWORD`,
+  `CREDENTIAL`). This repository is public. Move the secret out of `settings.json`, or add the key to
+  `MACHINE_ONLY_ENV` in `sync.sh` if it must stay local.
+
+The same steps by hand:
 
 ```bash
-brew install jq
+git switch main && git pull
+git switch -c sync/<platform>-<date>
+./sync.sh export
+git diff                                    # review every change
+git add -A && git commit -m "Sync global config from <platform>"
+git push -u origin HEAD
+gh pr create --base main --fill
 ```
+
+### Another machine published — import its changes
+
+After a sync PR is merged, on every other machine:
+
+```bash
+cd claude-code-config
+git switch main && git pull
+./sync.sh import
+```
+
+Restart Claude Code so it reloads settings and rules. `import` never deletes a rule that exists only on
+this machine; it warns instead, so that rule can be published or removed on purpose.
+
+### New plugins or MCP servers
+
+These are not file-synced. When adding or removing one:
+
+1. Run `./sync.sh publish` as usual — this records the `enabledPlugins` change in `settings.json`.
+2. On the same `sync/...` branch, update `PLUGINS` or the `add_mcp` lines in `install.sh`, and sections
+   [3](#3-plugins) or [4](#4-mcp-servers) of this README. Commit and push; the open PR updates.
+3. After merge, other machines run `git pull && ./install.sh`. It is idempotent.
+
+### Reading `status` and fixing differences
+
+| Label | Meaning | Usual fix |
+| --- | --- | --- |
+| `same` | Identical on both sides | Nothing |
+| `differs` | Both sides have it, contents differ | Publish if this machine's copy is newer; import if the repo's copy is newer. Unsure which is newer: compare with `git diff --no-index` and merge by hand |
+| `machine-only` | Only in `~/.claude` | Publish to share it, or delete it locally if another machine removed it on purpose |
+| `repo-only` | Only in the repository | Import to get it, or `publish --prune` to delete it from the repository |
+
+Before changing global config on a machine, start with `git pull && ./sync.sh import`. Then every
+machine edits the latest version, and two sync PRs rarely conflict.
+
+### Letting Claude Code do the sync
+
+Open Claude Code in this repository and say **"sync my global config"**. [`CLAUDE.md`](CLAUDE.md) gives
+Claude the exact procedure. Whenever a step is unclear — which side of a `differs` item is newer, a
+deletion, a secret-looking key, a conflict — Claude must stop and ask with its question tool: four
+options, recommended option first and marked **(Recommended)**.
 
 ---
 
@@ -186,10 +411,12 @@ percentage — green (256-colour `71`) below 50%, amber (`178`) from 50% to 79%,
 above. A non-zero percentage always shows at least one filled cell, so a 1% usage never renders as an
 empty bar. Rate-limit segments are skipped entirely when the API reports `-1` (unknown).
 
-Hard dependencies: `jq` for parsing, `awk` for the number formatting and gauge loops, and BSD `date -r`
-for the reset timestamps. With GNU `date` (Linux, Git Bash on Windows), `date -r <epoch>` reads a file's
-modification time instead, so the call fails quietly and the gauges render without the reset-time
-suffix. Change that call to `date -d @<epoch>` to get the timestamps back there.
+Hard dependencies: `jq` for parsing, `awk` for the number formatting and gauge loops, and `date` for the
+reset timestamps. The script works on macOS, Linux and Windows (Git Bash):
+
+- Reset timestamps try GNU `date -d @<epoch>` first, then fall back to BSD `date -r <epoch>`.
+- The `jq` output is piped through `tr -d '\r'`, because the Windows `jq` build ends lines with CRLF. A
+  trailing `\r` on the last field would otherwise break the `7d` reset timestamp.
 
 ---
 
@@ -262,13 +489,15 @@ session with `/caveman off`, or drop the plugin if that style is unwanted. No ho
 
 ## 4. MCP servers
 
-Four servers at user scope. Stored in `~/.claude.json` under `mcpServers`, not in `settings.json`.
+Five servers at user scope on macOS; four on Windows, where `markitdown` is optional. Stored in
+`~/.claude.json` under `mcpServers`, not in `settings.json`.
 
 | Name | Transport | Endpoint / command | Auth |
 | --- | --- | --- | --- |
 | `context7` | http | `https://mcp.context7.com/mcp` | `Authorization: Bearer <CONTEXT7_API_KEY>` |
 | `playwright` | stdio | `npx -y @playwright/mcp@latest` | none |
 | `sequential-thinking` | stdio | `npx @modelcontextprotocol/server-sequential-thinking` | none |
+| `markitdown` | stdio | `~/.local/bin/markitdown-mcp` (macOS; optional on Windows) | none |
 | `claude-design` | http | `https://api.anthropic.com/v1/design/mcp` | Claude account, via `/design-login` |
 
 Reinstall:
@@ -279,6 +508,7 @@ claude mcp add --scope user --transport http context7 https://mcp.context7.com/m
 
 claude mcp add --scope user playwright -- npx -y @playwright/mcp@latest
 claude mcp add --scope user sequential-thinking -- npx @modelcontextprotocol/server-sequential-thinking
+claude mcp add --scope user markitdown -- "$HOME/.local/bin/markitdown-mcp"
 claude mcp add --scope user --transport http claude-design https://api.anthropic.com/v1/design/mcp
 ```
 
@@ -310,7 +540,8 @@ project. There is no `~/.claude/CLAUDE.md` on this setup — the rules directory
 | [`rules/context7.md`](rules/context7.md) | Forces the `ctx7` CLI for any library/framework/SDK/API/CLI/cloud-service question, even well-known ones, in preference to web search and to training data. Documents the two-step flow (`ctx7 library <name>` to resolve an `/org/project` id, then `ctx7 docs <id> "<query>"`), one concept per query, max 3 commands per question, and explicitly forbids silently falling back to training data on a quota error. |
 | [`rules/subagent-models.md`](rules/subagent-models.md) | Model routing for every subagent launch (Agent tool, workflows, parallel batches). Sonnet is the default for implementation, search, tests, docs and mockups; Opus is reserved for reviews and work Sonnet cannot do reliably (architecture, cross-cutting refactors, unclear-cause debugging, money-safety or security reasoning, consistency passes). Every Sonnet subagent gets a complete nine-part brief (goal and done criteria, context, scope, read-first paths, applicable rules, pattern to copy, method with a verify loop, known traps, report format), and user-facing, money-related or cross-cutting Sonnet output goes through an Opus review before it counts as finished. |
 
-To add a rule: drop another `.md` in `~/.claude/rules/`. No registration needed.
+To add a rule: drop another `.md` in `~/.claude/rules/`. No registration needed. Then run
+`./sync.sh publish` to share it with every other machine.
 
 ---
 
@@ -318,19 +549,23 @@ To add a rule: drop another `.md` in `~/.claude/rules/`. No registration needed.
 
 Three separate sources feed the skill list.
 
-### a. Plugin skills
+### a. Caveman skills
 
-Every enabled plugin contributes its own namespaced skills. The `caveman` plugin ships the full caveman
-set as `caveman:<name>`:
+The `caveman` plugin ships the caveman skill set on both platforms, namespaced as `caveman:<name>`:
 
 `cavecrew`, `caveman`, `caveman-commit`, `caveman-compress`, `caveman-discover`,
 `caveman-evidence-review`, `caveman-explore`, `caveman-help`, `caveman-init`, `caveman-learn`,
 `caveman-manage`, `caveman-optimize`, `caveman-review`, `caveman-setup`, `caveman-stats`,
 `investigate-first`, `lean-build`, `migration`, `safe-refactor`, `surgical-patch`, `verify-and-stop`
 
-Because the plugin provides them, no separate `~/.agents/skills` clone or symlinks are needed.
-`~/.agents/skills` on this machine holds only copies of `find-docs` and `context7-mcp`, identical to the
-local directories below.
+**macOS** also has the same skills un-namespaced, installed from `JuliusBrussee/caveman` into
+`~/.agents/skills` and tracked in `~/.agents/.skill-lock.json`. Each entry in `~/.claude/skills/` is a
+symlink to `~/.agents/skills/<name>`. `~/.agents/skills` also holds `compress`, `find-skills` and
+`context7-mcp`, which are **not** symlinked into `~/.claude/skills` and therefore not active.
+`install.sh` recreates this on macOS and Linux.
+
+**Windows** uses the plugin copies only. `install.sh` skips the `~/.agents/skills` clone and symlinks
+there, because the plugin already provides every skill and symlinks need Developer Mode on Windows.
 
 The workflow skills are the genuinely reusable part of that set — `investigate-first` (evidence-ranked
 diagnosis before editing), `lean-build` (scope-bounded feature work), `migration` (reversible
@@ -339,7 +574,7 @@ bug fix), `verify-and-stop` (validation without scope creep).
 
 ### b. Local skill directories
 
-Two real directories in `~/.claude/skills/`, each a single `SKILL.md`:
+Two real directories (not symlinks) in `~/.claude/skills/`, each a single `SKILL.md`:
 
 - `find-docs` — documentation lookup for any library/framework/SDK/CLI/cloud service.
 - `context7-mcp` — same intent, routed through the Context7 MCP server instead of the CLI.
@@ -386,10 +621,11 @@ After `install.sh` and `/login`:
 ```bash
 claude --version                       # 2.1.292 or newer
 claude plugin list                     # 9 installed plugins enabled, plus 4 synced from claude.ai
-claude mcp list                        # 4 servers; claude-design needs /design-login
+claude mcp list                        # macOS: 5 servers; Windows: 4 (+ markitdown if installed)
 ls -l ~/.claude/rules/                 # code-comments.md, context7.md, subagent-models.md
-ls -l ~/.claude/skills/                # find-docs, context7-mcp, synced/
+ls -l ~/.claude/skills/                # find-docs, context7-mcp, synced/ (+ caveman symlinks on macOS)
 test -x ~/.claude/statusline-command.sh && echo "statusline ok"
+./sync.sh status                       # every item: same
 ```
 
 Then start a session and check that the status line renders gauge bars, and that the model shows as
@@ -407,13 +643,17 @@ Opus with `[xhigh]`.
 │   ├── code-comments.md
 │   ├── context7.md
 │   └── subagent-models.md
-├── skills/                    # local skills (this repo: skills/) + synced/
+├── skills/                    # local skills (this repo: skills/) + synced/ + macOS symlinks
 ├── plugins/
 │   ├── installed_plugins.json
 │   ├── known_marketplaces.json
 │   ├── cache/                 # plugin payloads
 │   └── synced/                # plugins synced from claude.ai
 └── projects/<slug>/memory/    # per-project memory files
+
+~/.agents/                     # macOS only
+├── .skill-lock.json           # provenance for github-sourced skills
+└── skills/
 
 ~/.claude.json                 # account state + mcpServers (secrets live here)
 ```
