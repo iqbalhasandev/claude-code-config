@@ -301,17 +301,19 @@ The full file lives in [`settings.json`](settings.json). What each key does:
 ### Model and reasoning
 
 ```json
-"model": "opus[1m]",
+"model": "opus",
 "effortLevel": "high",
 "modelSettings": {
   "claude-opus-5": { "effortLevel": "xhigh" },
-  "claude-opus-5-5": { "effortLevel": "xhigh" }
-}
+  "claude-opus-5-5": { "effortLevel": "medium" }
+},
+"switchModelsOnFlag": true
 ```
 
-Default model is Opus with the 1M-token context window. Baseline reasoning effort is `high`; when the
-session is actually on Opus 5 or Opus 5.5 it is raised to `xhigh`. The per-model blocks
-override the global `effortLevel`, so changing `effortLevel` alone will not affect those sessions.
+Default model is Opus with the standard context window. Baseline reasoning effort is `high`; Opus 5
+runs at `xhigh` and Opus 5.5 at `medium`. The per-model blocks override the global `effortLevel`, so
+changing `effortLevel` alone will not affect those sessions. `switchModelsOnFlag` is on as set by
+`/config`.
 
 ### Subagent model
 
@@ -325,10 +327,12 @@ Subagents run on Sonnet unless a launch names a model explicitly. This pairs wit
 ### Appearance
 
 ```json
-"theme": "dark-daltonized"
+"theme": "dark-daltonized",
+"editorMode": "normal",
+"timeFormat": "12-hour"
 ```
 
-Dark theme with a colour-blind-safe palette. The same value is mirrored into `~/.claude.json` by the
+Dark theme with a colour-blind-safe palette, normal (non-vim) prompt editing and 12-hour clock times. The same value is mirrored into `~/.claude.json` by the
 app itself on first run — it does not need to be set there by hand.
 
 ### Status line
@@ -379,15 +383,17 @@ pull requests. `sessionUrl: false` also leaves the Claude Code session link out 
 ### Workflow usage warning
 
 ```json
-"skipWorkflowUsageWarning": true
+"skipWorkflowUsageWarning": true,
+"workflowKeywordTriggerEnabled": false
 ```
 
-Skips the usage warning shown before a multi-agent workflow starts.
+Skips the usage warning shown before a multi-agent workflow starts, and stops prompt keywords from
+starting a workflow on their own.
 
 ### Plugins and marketplaces
 
-`enabledPlugins` and `extraKnownMarketplaces` are documented in [section 3](#3-plugins). Both
-marketplaces (`claude-plugins-official` and `caveman`) are declared in `extraKnownMarketplaces`.
+`enabledPlugins` and `extraKnownMarketplaces` are documented in [section 3](#3-plugins). All four
+marketplaces (`claude-plugins-official`, `caveman`, `ponytail` and `remotion`) are declared in `extraKnownMarketplaces`.
 
 ---
 
@@ -430,14 +436,16 @@ reset timestamps. The script works on macOS, Linux and Windows (Git Bash):
 
 ## 3. Plugins
 
-Two marketplaces are registered:
+Four marketplaces are registered:
 
 | Marketplace | Source |
 | --- | --- |
 | `claude-plugins-official` | github: `anthropics/claude-plugins-official` |
 | `caveman` | github: `JuliusBrussee/caveman` |
+| `ponytail` | github: `DietrichGebert/ponytail` |
+| `remotion` | github: `remotion-dev/claude-code-plugin` |
 
-Nine plugins, all installed at **user** scope, all enabled:
+Eleven plugins, all installed at **user** scope, all enabled:
 
 | Plugin | Marketplace | Version | What it adds |
 | --- | --- | --- | --- |
@@ -450,12 +458,16 @@ Nine plugins, all installed at **user** scope, all enabled:
 | `playground` | official | `b860d6f2` | Builds interactive single-file HTML playgrounds |
 | `swift-lsp` | official | 1.0.0 | Swift language server integration |
 | `caveman` | caveman | 2.7.0 | Compressed-output mode, cavecrew subagents, workflow skills, Caveman Cloud cost tooling |
+| `ponytail` | ponytail | 5.2.0 | "Lazy senior dev" mode: smallest complete change, audit/review/debt skills |
+| `remotion` | remotion | 4.0.535 | Remotion video skills: create, render, captions, maps, studio |
 
 Reinstall:
 
 ```bash
 claude plugin marketplace add anthropics/claude-plugins-official
 claude plugin marketplace add JuliusBrussee/caveman
+claude plugin marketplace add DietrichGebert/ponytail
+claude plugin marketplace add remotion-dev/claude-code-plugin
 
 claude plugin install superpowers@claude-plugins-official
 claude plugin install frontend-design@claude-plugins-official
@@ -466,6 +478,8 @@ claude plugin install claude-code-setup@claude-plugins-official
 claude plugin install playground@claude-plugins-official
 claude plugin install swift-lsp@claude-plugins-official
 claude plugin install caveman@caveman
+claude plugin install ponytail@ponytail
+claude plugin install remotion@remotion
 ```
 
 `install.sh` does this, then writes the `enabledPlugins` block so the set is enabled without further
@@ -584,12 +598,17 @@ bug fix), `verify-and-stop` (validation without scope creep).
 
 ### b. Local skill directories
 
-Two real directories (not symlinks) in `~/.claude/skills/`, each a single `SKILL.md`:
+Real directories (not symlinks) in `~/.claude/skills/`:
 
 - `find-docs` — documentation lookup for any library/framework/SDK/CLI/cloud service.
 - `context7-mcp` — same intent, routed through the Context7 MCP server instead of the CLI.
+- `graphify` — turns code, docs, papers, images or video into a queryable knowledge graph. Triggered by
+  `/graphify`.
+- `remotion-*` (13 directories: `remotion-best-practices`, `-captions`, `-create`, `-docs`,
+  `-interactivity`, `-maps`, `-markup`, `-multimedia`, `-render`, `-saas`, `-studio`, `-upgrade`) —
+  Remotion video skills, un-namespaced copies of the `remotion` plugin's skills.
 
-Both are in this repo under [`skills/`](skills/) and are copied in by the installer.
+All are in this repo under [`skills/`](skills/) and are copied in by the installer.
 
 ### c. Skills synced from claude.ai
 
@@ -634,13 +653,13 @@ claude plugin list                     # 9 installed plugins enabled, plus 4 syn
 claude mcp list                        # macOS: 5 servers; Windows: 4 (+ markitdown if installed)
 ls -l ~/.claude/rules/                 # code-comments.md, context7.md, model-usage.md,
                                        # subagent-models.md, test-runs.md
-ls -l ~/.claude/skills/                # find-docs, context7-mcp, synced/ (+ caveman symlinks on macOS)
+ls -l ~/.claude/skills/                # find-docs, context7-mcp, graphify, remotion-*, synced/ (+ caveman symlinks on macOS)
 test -x ~/.claude/statusline-command.sh && echo "statusline ok"
 ./sync.sh status                       # every item: same
 ```
 
 Then start a session and check that the status line renders gauge bars, and that the model shows as
-Opus with `[xhigh]`.
+Opus with `[medium]` (Opus 5.5).
 
 ---
 
