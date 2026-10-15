@@ -10,7 +10,8 @@
   "permissions": {
     "defaultMode": "bypassPermissions"
   },
-  "model": "opus[1m]",
+  "model": "opus",
+  "workflowKeywordTriggerEnabled": false,
   "statusLine": {
     "type": "command",
     "command": "bash \"$HOME/.claude/statusline-command.sh\""
@@ -24,7 +25,9 @@
     "chrome-devtools-mcp@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "playground@claude-plugins-official": true,
-    "swift-lsp@claude-plugins-official": true
+    "swift-lsp@claude-plugins-official": true,
+    "remotion@remotion": true,
+    "ponytail@ponytail": true
   },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
@@ -38,6 +41,18 @@
         "source": "github",
         "repo": "JuliusBrussee/caveman"
       }
+    },
+    "remotion": {
+      "source": {
+        "source": "github",
+        "repo": "remotion-dev/claude-code-plugin"
+      }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
     }
   },
   "effortLevel": "high",
@@ -46,16 +61,19 @@
       "effortLevel": "xhigh"
     },
     "claude-opus-5-5": {
-      "effortLevel": "xhigh"
+      "effortLevel": "medium"
     }
   },
   "voice": {
     "enabled": true,
     "mode": "hold"
   },
+  "timeFormat": "12-hour",
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
   "theme": "dark-daltonized",
+  "editorMode": "normal",
+  "switchModelsOnFlag": true,
   "agentPushNotifEnabled": true,
   "voiceEnabled": true
 }

@@ -79,6 +79,8 @@ fi
 info "adding marketplaces"
 claude plugin marketplace add anthropics/claude-plugins-official >/dev/null 2>&1 || warn "official marketplace already present"
 claude plugin marketplace add JuliusBrussee/caveman              >/dev/null 2>&1 || warn "caveman marketplace already present"
+claude plugin marketplace add DietrichGebert/ponytail             >/dev/null 2>&1 || warn "ponytail marketplace already present"
+claude plugin marketplace add remotion-dev/claude-code-plugin     >/dev/null 2>&1 || warn "remotion marketplace already present"
 
 PLUGINS=(
   superpowers@claude-plugins-official
@@ -90,6 +92,8 @@ PLUGINS=(
   playground@claude-plugins-official
   swift-lsp@claude-plugins-official
   caveman@caveman
+  ponytail@ponytail
+  remotion@remotion
 )
 for plugin in "${PLUGINS[@]}"; do
   if claude plugin install "$plugin" >/dev/null 2>&1; then
