@@ -598,12 +598,17 @@ bug fix), `verify-and-stop` (validation without scope creep).
 
 ### b. Local skill directories
 
-Two real directories (not symlinks) in `~/.claude/skills/`, each a single `SKILL.md`:
+Real directories (not symlinks) in `~/.claude/skills/`:
 
 - `find-docs` — documentation lookup for any library/framework/SDK/CLI/cloud service.
 - `context7-mcp` — same intent, routed through the Context7 MCP server instead of the CLI.
+- `graphify` — turns code, docs, papers, images or video into a queryable knowledge graph. Triggered by
+  `/graphify`.
+- `remotion-*` (13 directories: `remotion-best-practices`, `-captions`, `-create`, `-docs`,
+  `-interactivity`, `-maps`, `-markup`, `-multimedia`, `-render`, `-saas`, `-studio`, `-upgrade`) —
+  Remotion video skills, un-namespaced copies of the `remotion` plugin's skills.
 
-Both are in this repo under [`skills/`](skills/) and are copied in by the installer.
+All are in this repo under [`skills/`](skills/) and are copied in by the installer.
 
 ### c. Skills synced from claude.ai
 
@@ -648,7 +653,7 @@ claude plugin list                     # 9 installed plugins enabled, plus 4 syn
 claude mcp list                        # macOS: 5 servers; Windows: 4 (+ markitdown if installed)
 ls -l ~/.claude/rules/                 # code-comments.md, context7.md, model-usage.md,
                                        # subagent-models.md, test-runs.md
-ls -l ~/.claude/skills/                # find-docs, context7-mcp, synced/ (+ caveman symlinks on macOS)
+ls -l ~/.claude/skills/                # find-docs, context7-mcp, graphify, remotion-*, synced/ (+ caveman symlinks on macOS)
 test -x ~/.claude/statusline-command.sh && echo "statusline ok"
 ./sync.sh status                       # every item: same
 ```
