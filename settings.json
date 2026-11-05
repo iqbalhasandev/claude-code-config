@@ -27,7 +27,11 @@
     "playground@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true,
     "remotion@remotion": true,
-    "ponytail@ponytail": true
+    "ponytail@ponytail": true,
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true,
+    "claude-seo@agricidaniel-claude-seo": true,
+    "cloudflare@cloudflare": true,
+    "hyperframes@hyperframes": true
   },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
@@ -52,6 +56,30 @@
       "source": {
         "source": "github",
         "repo": "DietrichGebert/ponytail"
+      }
+    },
+    "ui-ux-pro-max-skill": {
+      "source": {
+        "source": "github",
+        "repo": "nextlevelbuilder/ui-ux-pro-max-skill"
+      }
+    },
+    "agricidaniel-claude-seo": {
+      "source": {
+        "source": "github",
+        "repo": "AgriciDaniel/claude-seo"
+      }
+    },
+    "cloudflare": {
+      "source": {
+        "source": "github",
+        "repo": "cloudflare/skills"
+      }
+    },
+    "hyperframes": {
+      "source": {
+        "source": "github",
+        "repo": "heygen-com/hyperframes"
       }
     }
   },

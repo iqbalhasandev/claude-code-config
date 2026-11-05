@@ -11,7 +11,10 @@ Applies to every project and every subagent launch (Agent tool, workflows, paral
   - **Complex work Sonnet cannot do reliably:** architecture and design decisions, cross-cutting refactors
     over many modules, debugging with an unclear cause, money-safety or security reasoning, consistency passes
     across several screens or files.
-- Unsure: start on Sonnet. Escalate to Opus when the Sonnet result fails review or the task turns out complex.
+- **UI work follows the same split.** Sonnet builds UI (views, components, CSS, JS, mockups, polish); Opus
+  reviews every UI task. A plan's "(Opus)" builder label does not bind; keep Opus for its reviewers.
+- Unsure: start on Sonnet. Escalate the builder to Opus only when the task needs a deep design or engine
+  decision Sonnet cannot make reliably, or when a Sonnet build fails review twice on the same problem.
   State in one line why a launch uses Opus.
 - Opus unavailable (limit or error): continue on Sonnet with a stronger brief and tell the user.
 
