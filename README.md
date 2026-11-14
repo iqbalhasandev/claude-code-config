@@ -165,8 +165,8 @@ Versions on the Windows source machine:
 #### Windows-only settings
 
 The shared `settings.json` works on Windows unchanged. Add these to `~/.claude/settings.json` only on a
-Windows machine that needs them. `sync.sh` keeps `CLAUDE_CODE_GIT_BASH_PATH` on the machine: `publish`
-never sends it to the repository, and `import` leaves it in place.
+Windows machine that needs them. `sync.sh` keeps `CLAUDE_CODE_GIT_BASH_PATH` and `MCP_TIMEOUT` on the machine: `publish`
+never sends them to the repository, and `import` leaves them in place.
 
 - **Claude Code cannot find Git Bash.** Point it at `bash.exe` inside the existing `env` block:
 
@@ -176,6 +176,9 @@ never sends it to the repository, and `import` leaves it in place.
     "CLAUDE_CODE_GIT_BASH_PATH": "C:\\Program Files\\Git\\bin\\bash.exe"
   }
   ```
+
+- **MCP servers time out while connecting.** Slow servers such as `windows-mcp` need longer than the
+  default. Add `"MCP_TIMEOUT": "60000"` (milliseconds) to the same `env` block.
 
 - **`swift-lsp` is not useful without a Swift toolchain.** It is harmless, but it can be turned off by
   setting `"swift-lsp@claude-plugins-official": false` in `enabledPlugins`.
@@ -201,7 +204,7 @@ Nothing is ever pushed straight to `main`.
 
 | Shared on every machine (synced) | Stays on each machine (never synced) |
 | --- | --- |
-| `settings.json`, except machine-only keys | `env.CLAUDE_CODE_GIT_BASH_PATH` and any key listed in `MACHINE_ONLY_ENV` in `sync.sh` |
+| `settings.json`, except machine-only keys | `env.CLAUDE_CODE_GIT_BASH_PATH`, `env.MCP_TIMEOUT` and any key listed in `MACHINE_ONLY_ENV` in `sync.sh` |
 | `statusline-command.sh` | `~/.claude.json` — MCP servers, account, OAuth |
 | `rules/*.md` | memories, sessions, history, caches |
 | `skills/<name>/` — real directories only, not `synced/`, not symlinks | plugin and MCP installs — `install.sh` handles those |
